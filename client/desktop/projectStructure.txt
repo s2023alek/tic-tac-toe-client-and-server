@@ -1,0 +1,123 @@
+﻿‎tic tac toe game
+
+время потраченное на разработку архитектуры(содержимое этого файла):
+development activity(this file only) log:
+	24/‎06/‎2017, ‏‎01:16:00 - start
+	24/‎06/‎2017, ‏‎01:21:00 - pause // 5 m
+	24/‎06/‎2017, ‏‎01:58:00 - start
+	24/‎06/‎2017, ‏‎02:40:00 - pause // 42 m
+	24/‎06/‎2017, ‏‎03:01:00 - start
+	24/‎06/‎2017, ‏‎03:44:00 - pause // 43 m
+
+
+// DU = Data Unit
+// M = Manager
+// VCM = Visual Component Manager
+
+
+screens:
+	app start (logo)
+	select 2nd player
+	playing
+	score board
+	restart
+
+actions:
+	add_player // select from list (basic list: User, AI)
+	start_game
+	set_mark //DUBoardMark
+			
+	
+Control (game):
+	MTTTGameSession
+		id_a_new_game //req DUTTTGameSession
+		id_a_stop_game
+		id_a_set_mark //req DUBoardMark
+		id_e_end_of_game // DUTTTGameSession
+		id_e_player_action_mark // DUPlayerAction
+		id_e_player_action_stop_game // DUPlayerAction
+		
+
+Control (View only):
+	VCMScreen
+		id_a_set_screen_loding
+		id_a_set_screen_select_2nd_player_type
+		id_a_set_screen_playing
+		id_a_set_screen_score_board
+		id_a_set_screen_restart
+		id_e_game_start
+		id_e_game_stop
+		id_e_stats_close
+		id_e_exit_app
+		id_e_select_player
+		id_e_cell_selected
+
+Model:
+	IDUUID
+		id:String //unique id
+	
+	IDUBoard e IDUUID
+		cell[x][y] // IDUBoardMark
+	
+	IDUBoardMark e IDUUID
+		markTypeId //int
+		pid //player id
+		cx //cell x
+		cy
+	
+	IDUTTTGameSession e IDUUID
+		list_players // [IDUPlayer, ...]
+		board // IDUBoard
+		currentPlayerId //IDUPlayer.id
+	
+	IDUPlayer e IDUUID
+		markTypeId //IDUMarkType.id
+	
+	IDUPlayerAction e IDUUID
+		pid //player id
+		
+	ADUPlayerAction i IDUPlayerAction
+		pid //player id
+		static id_mark
+		static id_quit_session
+	
+
+Control (Data only):
+	dp.app.game.DPDUBoard // data processor
+		addMark(targetBoard:DUBoard, a:DUBoardMark):DUBoardMark // null if added. non-null, if already present at given x,y
+	da.app.game.DADUBoard // data analyzer
+		hasLine(targetBoard:DUBoard, markTypeId:int):Boolean
+	dp.app.game.DPDUTTTGameSession // data processor // used for offline game only
+		actionPlayer(session:DUTTTGameSession, player:DUPlayer, action:DUPlayerAction):int // try add player action data
+		static id_c_s_updated
+		static id_c_e_game_is_over
+		static id_c_e_not_current_player
+		static id_c_e_board_cell_is_not_empty
+
+View (physical (web app version))
+	1 >VCMain
+	VCScreenLoading
+	VCScreenSelectPlayerType
+	1 >VCScreenStartNewGame
+	VCScreenPause
+		bQuitApp
+		bQuitSession //"end current game"
+	VCScreenReqYesNo
+	1 VCScreenExitGame
+	>VCScreenStats
+		winner// VCGameUIPlayer
+	>VCGameBoard
+		w //width
+		h
+		cell [VCGBCell, ...]
+	>VCGBCell
+		x
+		y
+		imMark
+		e_selected
+	>VCGameUIMain
+		bPause // show VCScreenPause
+		currentPlayer // VCGameUIPlayer
+	VCGameUIPlayer
+		dtPlayerDisplayName
+		imPlayerAvatar
