@@ -1,0 +1,65 @@
+Client Action:
+cA = (for example, make a move ({markType, x, y}))
+
+Server Thread0:
+// this is incoming msg i/o thread
+// feature: add incoming player client action to queue in the player's channel memory
+array [actionQueue]
+addToActionQueue(cA);
+
+Server Thread1:
+// this is incoming msg i/o thread processing service
+//feature: if (Thread0 is not adding action into queue) move last player msg from Thread's queue to GameWorld queue;
+
+Server Thread2:
+//this is the game world thread, runs the world
+//feature: process game world's events
+
+Server Thread3:
+//this is the game world service i/o thread 1
+//feature: process next action in the queue
+
+Server Thread4:
+//this is the game world service i/o thread 2
+//feature: if game world's object state is changed, send updated objects data to clients
+
+
+
+1 EVENT: client connect
+2 client: 
+	send Join message:
+		create UUID for a player
+		add to Room
+	send Login{clientId:UUID} message:
+		search all GameRooms for this player
+			if found: add to room, refresh ctx, send game board data to player
+
+3 if Room has 2 players: send GameStarted message to players
+
+100 EVENT: client disconnect: remove from room
+
+
+Server Data:
+	Player:
+		ctx:ChannelHandlerContext
+		id:UUID
+	
+	GameRoom:
+		list (Player)
+		map (GameWorld)
+		
+	GameWorld:
+		list (GameWorldObject)
+
+	GameWorldObject:
+		id
+
+	GameWorldSyncState
+		map bool - GameWorldObject
+		isObjectUpToDate():bool
+
+	ClientState
+		GameWorldSyncState
+
+	list ClientState
+	
